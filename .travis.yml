@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t killerbugs/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true killerbugs/react-test npm test
+
+after_success:
+  - docker build -t killerbugs/multi-client ./client
+  - docker build -t killerbugs/multi-nginx ./nginx
+  - docker build -t killerbugs/multi-server ./server
+  - docker build -t killerbugs/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" -- password-stdin
+  # Push the images to docker hub
+  - docker push killerbugs/multi-client
+  - docker push killerbugs/multi-nginx
+  - docker push killerbugs/multi-server
+  - docker push killerbugs/multi-worker
